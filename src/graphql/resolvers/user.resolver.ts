@@ -13,8 +13,8 @@ class UserResolver {
     constructor(@InjectRepository(User) private readonly userRepository: Repository<User>) { }
 
     @Query(returns => User, { nullable: true })
-    async userById(@Arg('id') id: string): Promise<User | undefined> {
-        const user = await this.userRepository.findOne(id);
+    async userById(@Arg('username') username: string): Promise<User | undefined> {
+        const user = await this.userRepository.findOne(username);
         return user;
     }
     @Query(returns => String, { nullable: true })
@@ -23,7 +23,7 @@ class UserResolver {
         if (!user || !bcrypt.compareSync(input.password, user.password)) {
             throw new Error('Incorrect username/password')
         }
-        return jwt.sign({ userId: user.id }, config.get('Jwt.secret'));
+        return jwt.sign({ username: user.username }, config.get('Jwt.secret'));
     }
     @Mutation(returns => User)
     async signUp(@Arg('input') input: SignUpInput): Promise<User> {
