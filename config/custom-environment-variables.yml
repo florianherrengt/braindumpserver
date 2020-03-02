@@ -1,0 +1,2 @@
+Jwt:
+  secret: JWT_SECRET
