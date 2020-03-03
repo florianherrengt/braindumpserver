@@ -7,6 +7,17 @@ import { InjectRepository } from 'typeorm-typedi-extensions';
 import { SignUpInput, SignInInput } from '../../inputs/user.input';
 import * as jwt from 'jsonwebtoken'
 
+export interface JwtObject {
+    username: string
+}
+
+const createJwt = (user: User): string => {
+    if (!user.username) {
+        throw new Error('Jwt needs a username')
+    }
+    const jwtContent: JwtObject = { username: user.username }
+    return jwt.sign(jwtContent, config.get('Jwt.secret'));
+}
 
 @Resolver(User)
 class UserResolver {
@@ -23,16 +34,17 @@ class UserResolver {
         if (!user || !bcrypt.compareSync(input.password, user.password)) {
             throw new Error('Incorrect username/password')
         }
-        return jwt.sign({ username: user.username }, config.get('Jwt.secret'));
+
+        return createJwt(user)
     }
-    @Mutation(returns => User)
-    async signUp(@Arg('input') input: SignUpInput): Promise<User> {
+    @Mutation(returns => String)
+    async signUp(@Arg('input') input: SignUpInput): Promise<string> {
         const newUser = this.userRepository.create({ ...input, password: bcrypt.hashSync(input.password) });
         await this.userRepository.save(newUser);
         if (!newUser) {
             throw new Error('cannot create new user');
         }
-        return newUser;
+        return createJwt(newUser)
     }
 }
 
