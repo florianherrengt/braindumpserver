@@ -28,6 +28,7 @@
     "helmet": "^3.21.3",
     "jest": "^25.1.0",
     "jsonwebtoken": "^8.5.1",
+    "nodemon": "^2.0.2",
     "reflect-metadata": "^0.1.13",
     "type-graphql": "^0.17.6",
     "typedi": "^0.8.0",
@@ -36,6 +37,8 @@
   },
   "devDependencies": {
     "prettier": "^1.19.1",
-    "sqlite3": "^4.1.1"
+    "sqlite3": "^4.1.1",
+    "ts-jest": "^25.2.1",
+    "typescript": "^3.8.3"
   }
 }

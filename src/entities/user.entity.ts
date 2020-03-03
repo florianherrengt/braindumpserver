@@ -1,13 +1,20 @@
 import { ObjectType, Field } from 'type-graphql';
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, PrimaryColumn, OneToMany } from 'typeorm';
+import { Note } from './note.entity';
 
 @Entity()
 @ObjectType()
 export class User {
     @Field()
-    @PrimaryGeneratedColumn('uuid')
+    @PrimaryColumn({ nullable: false, length: 100 })
     username: string;
 
-    @Column()
+    @Column({ nullable: false, length: 100 })
     password: string;
+
+    @OneToMany(
+        type => Note,
+        note => note.id,
+    )
+    notes: Note[];
 }
