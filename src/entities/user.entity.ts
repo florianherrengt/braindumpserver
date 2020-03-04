@@ -1,11 +1,12 @@
-import { ObjectType, Field } from 'type-graphql';
+import { ObjectType, Field, ID } from 'type-graphql';
 import { Entity, PrimaryGeneratedColumn, Column, PrimaryColumn, OneToMany } from 'typeorm';
 import { Note } from './note.entity';
+import { Tag } from './tag.entitiy';
 
 @Entity()
 @ObjectType()
 export class User {
-    @Field()
+    @Field(type => ID)
     @PrimaryColumn({ nullable: false, length: 100 })
     username: string;
 
@@ -17,4 +18,10 @@ export class User {
         note => note.id,
     )
     notes: Note[];
+
+    @OneToMany(
+        type => Tag,
+        tag => tag.id,
+    )
+    tags: Tag[];
 }

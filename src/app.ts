@@ -5,24 +5,25 @@ import { buildSchema } from 'type-graphql';
 import * as TypeORM from 'typeorm';
 import { Container } from 'typedi';
 import * as jwt from 'jsonwebtoken';
-import { UserResolver } from './graphql/resolvers/user.resolver';
-import { User, Note } from './entities';
-import { NoteResolver } from './graphql/resolvers/note.resolver';
-import { JwtObject, createContext, } from './helpers';
+import { User, Note, Tag } from './entities';
+import { NoteResolver, UserResolver, TagResolver } from './graphql/resolvers';
+import { JwtObject, createContext } from './helpers';
+import * as cors from 'cors';
 
 export const createApp = async () => {
     const app = express();
+    app.use(cors());
     TypeORM.useContainer(Container);
     await TypeORM.createConnection({
         type: 'sqlite',
         database: 'local.db',
-        // synchronize: true,
+        synchronize: true,
         // dropSchema: true,
-        entities: [User, Note],
+        entities: [User, Note, Tag],
     });
 
     const schema = await buildSchema({
-        resolvers: [UserResolver, NoteResolver],
+        resolvers: [UserResolver, NoteResolver, TagResolver],
         container: Container,
     });
 

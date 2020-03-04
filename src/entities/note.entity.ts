@@ -1,16 +1,17 @@
-import { ObjectType, Field } from 'type-graphql';
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn } from 'typeorm';
+import { ObjectType, Field, ID } from 'type-graphql';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, ManyToMany, JoinTable } from 'typeorm';
 import { User } from './user.entity';
+import { Tag } from './tag.entitiy';
 
 @Entity()
 @ObjectType()
 export class Note {
-    @Field()
+    @Field(type => ID)
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
     @Field()
-    @Column({ length: 1000 })
+    @Column({ length: 10000 })
     text: string;
 
     @Field()
@@ -22,4 +23,9 @@ export class Note {
         user => user.username,
     )
     user: User;
+
+    @Field(type => [Tag])
+    @ManyToMany(type => Tag)
+    @JoinTable()
+    tags: Tag[];
 }

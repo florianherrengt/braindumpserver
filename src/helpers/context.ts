@@ -1,4 +1,3 @@
-
 export interface AppContext {
     user?: { username: string };
 }
@@ -8,5 +7,5 @@ export const createContext = ({ username }: { username: string }) => {
     if (username) {
         Object.assign(context, { user: { username, role: 1 } });
     }
-    return context
+    return context;
 };
