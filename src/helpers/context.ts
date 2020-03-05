@@ -1,11 +1,15 @@
+import { getRepository } from 'typeorm'
+import { User } from '../entities'
 export interface AppContext {
     user?: { username: string };
 }
 
-export const createContext = ({ username }: { username: string }) => {
+export const createContext = async ({ username }: { username: string }) => {
+    const userRepository = getRepository(User)
     const context = {};
     if (username) {
-        Object.assign(context, { user: { username, role: 1 } });
+        const user = await userRepository.findOne(username)
+        Object.assign(context, { user });
     }
     return context;
 };

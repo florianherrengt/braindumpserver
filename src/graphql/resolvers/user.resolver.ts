@@ -1,26 +1,36 @@
-import { AuthenticationError } from 'apollo-server-express';
+import { UserInputError } from 'apollo-server-express';
 import * as bcrypt from 'bcryptjs';
-import { Arg, Mutation, Query, Resolver } from 'type-graphql';
+import { Arg, Mutation, Query, Resolver, Ctx, Int } from 'type-graphql';
 import { Repository } from 'typeorm';
 import { InjectRepository } from 'typeorm-typedi-extensions';
 import { User } from '../../entities/user.entity';
 import { createJwt } from '../../helpers/jwt';
 import { SignInInput, SignUpInput } from '../inputs/user.input';
+import { AppContext } from 'src/helpers';
 
 @Resolver(User)
 export class UserResolver {
-    constructor(@InjectRepository(User) private readonly userRepository: Repository<User>) {}
+    constructor(@InjectRepository(User) private readonly userRepository: Repository<User>) { }
+
+    @Query(returns => Int, { nullable: false })
+    async userExists(@Arg('username') username: string): Promise<boolean> {
+        const user = await this.userRepository.findOne(username);
+        return !!user
+    }
 
     @Query(returns => User, { nullable: true })
-    async userById(@Arg('username') username: string): Promise<User | undefined> {
-        const user = await this.userRepository.findOne(username);
+    async currentUser(@Ctx() context: AppContext): Promise<User | undefined> {
+        if (!context.user) {
+            return;
+        }
+        const user = await this.userRepository.findOne(context.user.username);
         return user;
     }
     @Mutation(returns => String, { nullable: true })
     async signIn(@Arg('input') input: SignInInput): Promise<string> {
         const user = await this.userRepository.findOne({ where: { username: input.username } });
         if (!user || !bcrypt.compareSync(input.password, user.password)) {
-            throw new AuthenticationError('Incorrect username/password');
+            throw new UserInputError('Incorrect username/password');
         }
 
         return createJwt(user);

@@ -30,14 +30,15 @@ export const createApp = async () => {
     const apolloServer = new ApolloServer({
         schema,
         tracing: true,
-        context: ({ req }) => {
+        context: async ({ req }) => {
             const token = (req.header('Authorization') || '').split(' ')[1];
             if (!token) {
                 return {};
             }
             try {
                 const user = jwt.verify(token, config.get('Jwt.secret')) as JwtObject;
-                return createContext({ username: user.username });
+                const context = await createContext({ username: user.username });
+                return context;
             } catch (e) {
                 return {};
             }

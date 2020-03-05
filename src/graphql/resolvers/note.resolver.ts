@@ -1,4 +1,4 @@
-import { ForbiddenError } from 'apollo-server-express';
+import { ForbiddenError, AuthenticationError } from 'apollo-server-express';
 import { AppContext } from 'src/helpers';
 import { Arg, Ctx, Mutation, Query, Resolver } from 'type-graphql';
 import { Repository, In } from 'typeorm';
@@ -18,7 +18,7 @@ export class NoteResolver {
         @Ctx() context: AppContext,
     ): Promise<Note[]> {
         if (!context.user) {
-            throw new ForbiddenError('User not logged in');
+            throw new AuthenticationError('User not logged in');
         }
         const { username } = context.user;
         return this.noteRepository.find({
@@ -33,8 +33,8 @@ export class NoteResolver {
     }
     @Mutation(returns => Note)
     async createNote(@Arg('input') input: CreateNoteInput, @Ctx() context: AppContext): Promise<any> {
-        if (!context.user) {
-            throw new ForbiddenError('User not logged in');
+        if (!context.user?.username) {
+            throw new AuthenticationError('User not logged in');
         }
         const { username } = context.user;
         let { text, tags } = input;
