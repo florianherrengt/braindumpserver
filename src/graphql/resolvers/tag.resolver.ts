@@ -20,14 +20,4 @@ export class TagResolver {
             where: { user: { username } },
         });
     }
-    @Mutation(returns => Tag)
-    async createTag(@Arg('input') input: CreateTagInput, @Ctx() context: AppContext): Promise<Tag> {
-        if (!context.user) {
-            throw new ForbiddenError('User not logged in');
-        }
-        const { username } = context.user;
-        const newTag = this.tagRepository.create({ ...input, user: { username } });
-        await this.tagRepository.save(newTag);
-        return newTag;
-    }
 }

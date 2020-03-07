@@ -7,15 +7,6 @@ import { User } from 'src/entities';
 import { JwtObject } from 'src/helpers/jwt';
 
 describe('Resolvers/User', () => {
-    it('getUserById', async () => {
-        const fakeUser = { username: Math.random().toString() };
-        const userRepository = ({ findOne: jest.fn(() => fakeUser) } as unknown) as Repository<User>;
-        const resolver = new UserResolver(userRepository);
-        const user = await resolver.userById(fakeUser.username);
-        expect(user).toBe(fakeUser);
-        expect(userRepository.findOne).toHaveBeenCalledTimes(1);
-        expect(userRepository.findOne).toHaveBeenCalledWith(fakeUser.username);
-    });
     it('signUp', async () => {
         const input = { username: Math.random().toString(), password: Math.random().toString() };
         const fakeUser = { ...input };

@@ -10,12 +10,12 @@ import { AppContext } from 'src/helpers';
 
 @Resolver(User)
 export class UserResolver {
-    constructor(@InjectRepository(User) private readonly userRepository: Repository<User>) { }
+    constructor(@InjectRepository(User) private readonly userRepository: Repository<User>) {}
 
     @Query(returns => Int, { nullable: false })
     async userExists(@Arg('username') username: string): Promise<boolean> {
         const user = await this.userRepository.findOne(username);
-        return !!user
+        return !!user;
     }
 
     @Query(returns => User, { nullable: true })
