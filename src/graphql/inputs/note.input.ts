@@ -2,11 +2,7 @@ import { InputType, Field, Int } from 'type-graphql';
 import { MaxLength } from 'class-validator';
 import { Note, Tag } from '../../entities';
 
-@InputType()
-class NewTagNote {
-    @Field({ nullable: false })
-    label: string;
-}
+
 
 @InputType()
 class TagNote {
@@ -20,9 +16,6 @@ export class CreateNoteInput {
     @MaxLength(10000)
     text: string;
 
-    @Field(type => [TagNote], { nullable: true })
-    tags?: Tag[];
-
-    @Field(type => NewTagNote, { nullable: true })
-    newTags?: NewTagNote[];
+    @Field(type => [TagNote], { nullable: false })
+    tags?: TagNote[]
 }
