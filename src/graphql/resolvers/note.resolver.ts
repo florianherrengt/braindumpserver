@@ -7,34 +7,52 @@ import { Note } from '../../entities/note.entity';
 import { CreateNoteInput } from '../inputs/note.input';
 import { Tag } from '../../entities';
 import { getManager } from 'typeorm';
+import { PaginatedResponse } from './PaginatedResponse';
+
+// @ts-ignore
+const PaginatedNoteResponse = PaginatedResponse(Note);
+type PaginatedNoteResponse = InstanceType<typeof PaginatedNoteResponse>;
 
 @Resolver(Note)
 export class NoteResolver {
     constructor(
         @InjectRepository(Note) private readonly noteRepository: Repository<Note>,
         @InjectRepository(Tag) private readonly tagRepository: Repository<Tag>,
-    ) { }
+    ) {}
 
-    @Query(returns => [Note])
+    @Query(returns => PaginatedNoteResponse)
     async currentUserNotes(
+        @Arg('tagsId', () => [String], { defaultValue: [] }) tagsId: string[],
         @Arg('limit', { defaultValue: 10 }) limit: number,
         @Arg('skip', { defaultValue: 0 }) skip: number,
         @Ctx() context: AppContext,
-    ): Promise<Note[]> {
-        if (!context.user) {
+    ): Promise<PaginatedNoteResponse> {
+        const { user } = context;
+        if (!user) {
             throw new AuthenticationError('User not logged in');
         }
-        const { username } = context.user;
-        return this.noteRepository.find({
-            where: { user: { username } },
-            skip,
-            take: limit,
-            order: {
-                createdAt: 'DESC',
-            },
-            relations: ['tags'],
-        });
+        let notesQuery = this.noteRepository
+            .createQueryBuilder('notes')
+            .leftJoinAndSelect('notes.tags', 'tag')
+            .where('notes.userUsername = :username', { username: user.username });
+
+        if (tagsId.length) {
+            notesQuery = notesQuery.where('tag.id IN (:...tagsId)', {
+                tagsId,
+            });
+        }
+        const [items, total] = await notesQuery
+            .orderBy('notes.createdAt', 'DESC')
+            .skip(skip)
+            .take(limit)
+            .getManyAndCount();
+        return {
+            items,
+            hasMore: total !== items.length + skip,
+            total,
+        };
     }
+
     @Transaction()
     @Mutation(returns => Note)
     async createNote(
