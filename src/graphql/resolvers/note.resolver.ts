@@ -1,6 +1,6 @@
 import { ForbiddenError, AuthenticationError } from 'apollo-server-express';
 import { AppContext } from 'src/helpers';
-import { Arg, Ctx, Mutation, Query, Resolver } from 'type-graphql';
+import { Arg, Ctx, Mutation, Query, Resolver, Int } from 'type-graphql';
 import { Repository, In, Transaction, TransactionManager, EntityManager } from 'typeorm';
 import { InjectRepository } from 'typeorm-typedi-extensions';
 import { Note } from '../../entities/note.entity';
@@ -23,8 +23,8 @@ export class NoteResolver {
     @Query(returns => PaginatedNoteResponse)
     async currentUserNotes(
         @Arg('tagsId', () => [String], { defaultValue: [] }) tagsId: string[],
-        @Arg('limit', { defaultValue: 10 }) limit: number,
-        @Arg('skip', { defaultValue: 0 }) skip: number,
+        @Arg('limit', () => Int, { defaultValue: 10 }) limit: number,
+        @Arg('skip', () => Int, { defaultValue: 0 }) skip: number,
         @Ctx() context: AppContext,
     ): Promise<PaginatedNoteResponse> {
         const { user } = context;
