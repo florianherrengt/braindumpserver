@@ -1,24 +1,32 @@
-import { ForbiddenError, AuthenticationError } from 'apollo-server-express';
+import { AuthenticationError } from 'apollo-server-express';
 import { AppContext } from 'src/helpers';
-import { Arg, Ctx, Mutation, Query, Resolver, Int } from 'type-graphql';
-import { Repository, In, Transaction, TransactionManager, EntityManager } from 'typeorm';
+import { Arg, Ctx, Field, Int, Mutation, ObjectType, Query, Resolver } from 'type-graphql';
+import { EntityManager, Repository, Transaction, TransactionManager } from 'typeorm';
 import { InjectRepository } from 'typeorm-typedi-extensions';
-import { Note } from '../../entities/note.entity';
-import { CreateNoteInput } from '../inputs/note.input';
 import { Tag } from '../../entities';
-import { getManager } from 'typeorm';
-import { PaginatedResponse } from './PaginatedResponse';
+import { Note } from '../../entities/note.entity';
+import { CreateNoteInput, UpdateNoteInput } from '../inputs/note.input';
 
-// @ts-ignore
-const PaginatedNoteResponse = PaginatedResponse(Note);
-type PaginatedNoteResponse = InstanceType<typeof PaginatedNoteResponse>;
+@ObjectType(`PaginatedNoteResponse`, { isAbstract: true })
+class PaginatedNoteResponse {
+    // here we use the runtime argument
+    @Field(type => [Note])
+    // and here the generic type
+    items: Note[];
+
+    @Field(type => Int)
+    total: number;
+
+    @Field()
+    hasMore: boolean;
+}
 
 @Resolver(Note)
 export class NoteResolver {
     constructor(
         @InjectRepository(Note) private readonly noteRepository: Repository<Note>,
         @InjectRepository(Tag) private readonly tagRepository: Repository<Tag>,
-    ) {}
+    ) { }
 
     @Query(returns => PaginatedNoteResponse)
     async currentUserNotes(
@@ -53,6 +61,43 @@ export class NoteResolver {
         };
     }
 
+    @Mutation(returns => Note)
+    async deleteNote(@Arg('id') noteId: string, @Ctx() context: AppContext): Promise<Note> {
+        if (!context.user?.username) {
+            throw new AuthenticationError('User not logged in');
+        }
+        const { user } = context;
+        const note = await this.noteRepository.findOne({ where: { id: noteId, user } });
+        if (!note) {
+            throw new Error('Cannot find note with ID: ' + noteId);
+        }
+        await this.noteRepository.delete(note.id);
+        return note;
+    }
+
+    @Mutation(returns => Note)
+    async updateNote(@Arg('input') input: UpdateNoteInput, @Ctx() context: AppContext): Promise<Note> {
+        if (!context.user?.username) {
+            throw new AuthenticationError('User not logged in');
+        }
+        const { user } = context;
+        const { id, text, tags } = input;
+        const note = await this.noteRepository.findOne({ where: { id: input.id, user }, relations: ['tags'] });
+        if (!note) {
+            throw new Error('Cannot find note with ID: ' + id);
+        }
+        if (tags) {
+            // @ts-ignore
+            note.tags = tags.map(tag => ({ id: tag.id }));
+        }
+        if (text) {
+            note.text = encodeURIComponent(text);
+        }
+        await this.noteRepository.save(note);
+
+        return (await this.noteRepository.findOne(note.id, { relations: ['tags'] }))!;
+    }
+
     @Transaction()
     @Mutation(returns => Note)
     async createNote(
@@ -66,7 +111,7 @@ export class NoteResolver {
         const { username } = context.user;
         const { text, tags } = input;
 
-        let noteTagsId: string[] = tags && tags.length ? tags.map(t => t.id) : [];
+        const noteTagsId: string[] = tags && tags.length ? tags.map(t => t.id) : [];
 
         const newNote = this.noteRepository.create({
             text: encodeURIComponent(text),

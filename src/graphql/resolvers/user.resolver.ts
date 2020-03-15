@@ -26,6 +26,7 @@ export class UserResolver {
         const user = await this.userRepository.findOne(context.user.username);
         return user;
     }
+
     @Mutation(returns => String, { nullable: true })
     async signIn(@Arg('input') input: SignInInput): Promise<string> {
         const user = await this.userRepository.findOne({ where: { username: input.username } });
@@ -46,5 +47,18 @@ export class UserResolver {
             throw new Error('cannot create new user');
         }
         return createJwt(newUser);
+    }
+    @Mutation(returns => Int)
+    async deleteAccount(@Ctx() context: AppContext) {
+        if (!context.user) {
+            throw new Error('cannot delete user');
+        }
+        try {
+            await this.userRepository.delete(context.user.username);
+            return true;
+        } catch (error) {
+            throw error;
+            return false;
+        }
     }
 }

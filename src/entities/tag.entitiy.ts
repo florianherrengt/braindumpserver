@@ -20,6 +20,7 @@ export class Tag {
     @ManyToOne(
         type => User,
         user => user.username,
+        { onDelete: 'CASCADE' },
     )
     user: User;
 }

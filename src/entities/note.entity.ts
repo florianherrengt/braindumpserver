@@ -21,6 +21,7 @@ export class Note {
     @ManyToOne(
         type => User,
         user => user.username,
+        { onDelete: 'CASCADE' },
     )
     user: User;
 
