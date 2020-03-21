@@ -2,6 +2,9 @@ kind: pipeline
 type: kubernetes
 name: default
 
+metadata:
+  namespace: drone
+
 steps:
   - name: greeting
     image: alpine
