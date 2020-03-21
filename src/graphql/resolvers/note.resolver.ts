@@ -1,12 +1,12 @@
 import { AuthenticationError } from 'apollo-server-express';
+import { isEmpty } from 'lodash';
 import { AppContext } from 'src/helpers';
 import { Arg, Ctx, Field, Int, Mutation, ObjectType, Query, Resolver } from 'type-graphql';
-import { EntityManager, Repository, Transaction, ConnectionManager, TransactionManager, In } from 'typeorm';
+import { EntityManager, Repository, Transaction, TransactionManager } from 'typeorm';
 import { InjectRepository } from 'typeorm-typedi-extensions';
 import { Tag } from '../../entities';
 import { Note } from '../../entities/note.entity';
 import { CreateNoteInput, UpdateNoteInput } from '../inputs/note.input';
-import { isEmpty } from 'lodash'
 
 @ObjectType(`PaginatedNoteResponse`, { isAbstract: true })
 class PaginatedNoteResponse {
@@ -39,16 +39,13 @@ export class NoteResolver {
             throw new AuthenticationError('User not logged in');
         }
 
-
-
-
         let query = this.noteRepository
             .createQueryBuilder('Note')
             .leftJoinAndSelect('Note.tags', 'tag')
-            .where('Note.user = :username', { username: user.username, tagsId })
+            .where('Note.user = :username', { username: user.username, tagsId });
 
         if (!isEmpty(tagsId)) {
-            query = query.andWhere('tag.id IN (:...tagsId)', { tagsId })
+            query = query.andWhere('tag.id IN (:...tagsId)', { tagsId });
         }
 
         const [items, total] = await query
@@ -122,6 +119,6 @@ export class NoteResolver {
             tags: noteTagsId.map(id => ({ id })),
         });
         await manager.save(newNote);
-        return newNote
+        return newNote;
     }
 }
