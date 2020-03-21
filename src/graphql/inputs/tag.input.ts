@@ -9,7 +9,6 @@ export class CreateTagInput implements Partial<Tag> {
     label: string;
 }
 
-
 @InputType()
 export class UpdateTagInput implements Partial<Tag> {
     @Field({ nullable: false })

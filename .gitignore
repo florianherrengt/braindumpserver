@@ -1,5 +1,7 @@
 build
 node_modules
-local.db
+*.db
 .env
 *.swp
+assets
+*secrets.yml

@@ -7,18 +7,18 @@ import { Container } from 'typedi';
 import * as jwt from 'jsonwebtoken';
 import { User, Note, Tag } from './entities';
 import { NoteResolver, UserResolver, TagResolver } from './graphql/resolvers';
-import { JwtObject, createContext } from './helpers';
+import { JwtObject, createContext, getDbConnectionOptions } from './helpers';
 import * as cors from 'cors';
+import * as path from 'path';
 
 export const createApp = async () => {
     const app = express();
     app.use(cors());
     TypeORM.useContainer(Container);
+
     await TypeORM.createConnection({
-        type: 'sqlite',
-        database: 'local.db',
+        ...getDbConnectionOptions(),
         synchronize: true,
-        // dropSchema: true,
         entities: [User, Note, Tag],
     });
 
@@ -46,5 +46,15 @@ export const createApp = async () => {
     });
 
     apolloServer.applyMiddleware({ app, path: '/api/graphql' });
+
+    app.use('/healthz', (_, response) => {
+        response.sendStatus(200);
+    });
+
+    app.use(express.static(path.join(__dirname + '/../assets')));
+    app.get('*', (_, res) => {
+        res.sendFile(path.join(__dirname + '/../assets/index.html'));
+    });
+
     return app;
 };

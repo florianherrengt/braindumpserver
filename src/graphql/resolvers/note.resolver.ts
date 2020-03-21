@@ -1,17 +1,16 @@
 import { AuthenticationError } from 'apollo-server-express';
 import { AppContext } from 'src/helpers';
 import { Arg, Ctx, Field, Int, Mutation, ObjectType, Query, Resolver } from 'type-graphql';
-import { EntityManager, Repository, Transaction, TransactionManager } from 'typeorm';
+import { EntityManager, Repository, Transaction, ConnectionManager, TransactionManager, In } from 'typeorm';
 import { InjectRepository } from 'typeorm-typedi-extensions';
 import { Tag } from '../../entities';
 import { Note } from '../../entities/note.entity';
 import { CreateNoteInput, UpdateNoteInput } from '../inputs/note.input';
+import { isEmpty } from 'lodash'
 
 @ObjectType(`PaginatedNoteResponse`, { isAbstract: true })
 class PaginatedNoteResponse {
-    // here we use the runtime argument
     @Field(type => [Note])
-    // and here the generic type
     items: Note[];
 
     @Field(type => Int)
@@ -39,21 +38,25 @@ export class NoteResolver {
         if (!user) {
             throw new AuthenticationError('User not logged in');
         }
-        let notesQuery = this.noteRepository
-            .createQueryBuilder('notes')
-            .leftJoinAndSelect('notes.tags', 'tag')
-            .where('notes.userUsername = :username', { username: user.username });
 
-        if (tagsId.length) {
-            notesQuery = notesQuery.where('tag.id IN (:...tagsId)', {
-                tagsId,
-            });
+
+
+
+        let query = this.noteRepository
+            .createQueryBuilder('Note')
+            .leftJoinAndSelect('Note.tags', 'tag')
+            .where('Note.user = :username', { username: user.username, tagsId })
+
+        if (!isEmpty(tagsId)) {
+            query = query.andWhere('tag.id IN (:...tagsId)', { tagsId })
         }
-        const [items, total] = await notesQuery
-            .orderBy('notes.createdAt', 'DESC')
+
+        const [items, total] = await query
+            .orderBy('Note.createdAt', 'DESC')
             .skip(skip)
             .take(limit)
             .getManyAndCount();
+
         return {
             items,
             hasMore: total !== items.length + skip,

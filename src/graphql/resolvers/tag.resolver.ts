@@ -8,7 +8,7 @@ import { CreateTagInput, UpdateTagInput } from '../inputs/tag.input';
 
 @Resolver(Tag)
 export class TagResolver {
-    constructor(@InjectRepository(Tag) private readonly tagRepository: Repository<Tag>) { }
+    constructor(@InjectRepository(Tag) private readonly tagRepository: Repository<Tag>) {}
 
     @Query(returns => [Tag])
     async currentUserTags(@Ctx() context: AppContext): Promise<Tag[]> {
@@ -25,30 +25,30 @@ export class TagResolver {
         if (!context.user) {
             throw new AuthenticationError('User not logged in');
         }
-        const newTag = this.tagRepository.create({ ...input, user: context.user })
-        await this.tagRepository.save(newTag)
-        return newTag
+        const newTag = this.tagRepository.create({ ...input, user: context.user });
+        await this.tagRepository.save(newTag);
+        return newTag;
     }
     @Mutation(returns => Tag)
     async updateTag(@Arg('input') tag: UpdateTagInput, @Ctx() context: AppContext): Promise<Tag | undefined> {
         if (!context.user) {
             throw new AuthenticationError('User not logged in');
         }
-        const { user } = context
-        await this.tagRepository.update({ id: tag.id }, { ...tag, user })
-        return this.tagRepository.findOne(tag.id)
+        const { user } = context;
+        await this.tagRepository.update({ id: tag.id }, { ...tag, user });
+        return this.tagRepository.findOne(tag.id);
     }
     @Mutation(returns => Tag)
     async deleteTag(@Arg('id') id: string, @Ctx() context: AppContext): Promise<Tag | undefined> {
         if (!context.user) {
             throw new AuthenticationError('User not logged in');
         }
-        const { user } = context
-        const tag = await this.tagRepository.findOne(id)
+        const { user } = context;
+        const tag = await this.tagRepository.findOne(id);
         if (!tag) {
-            throw new Error(`Tag with id ${id} does not exist`)
+            throw new Error(`Tag with id ${id} does not exist`);
         }
-        await this.tagRepository.delete({ id, user })
-        return tag
+        await this.tagRepository.delete({ id, user });
+        return tag;
     }
 }
