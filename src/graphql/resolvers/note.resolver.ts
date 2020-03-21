@@ -122,6 +122,6 @@ export class NoteResolver {
             tags: noteTagsId.map(id => ({ id })),
         });
         await manager.save(newNote);
-        return this.noteRepository.findOne(newNote.id, { relations: ['tags'] });
+        return newNote
     }
 }
